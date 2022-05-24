@@ -22,15 +22,22 @@ struct Renderable {
     bg: RGB,
 }
 
+// LeftMover likes to go left.
+#[derive(Component)]
+struct LeftMover {}
+
 struct State {
     // A world is an ECS (Entity Control System). It gathers the data for each
     // entity or component and does something with it.
     ecs: World,
 }
+
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         // Clear the screen
         ctx.cls();
+
+        self.run_systems();
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -41,6 +48,37 @@ impl GameState for State {
         for (pos, render) in (&positions, &renderables).join() {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
+    }
+}
+
+struct LeftWalker {}
+
+// Systems are a way to contain component logic together and
+// have them run indepenently.
+//
+// We are implementing Specs `System` train on our `LeftWalker` struct.
+impl<'a> System<'a> for LeftWalker {
+    // SystemData tells Specs what the System requires.
+    // Here SystemData needs Read Access to the `LeftMover` component
+    // and Write Access to `Position` component.
+    type SystemData = (ReadStorage<'a, LeftMover>, WriteStorage<'a, Position>);
+
+    // run is the actual trait implementation required by the `impl System`
+    fn run(&mut self, (lefty, mut pos): Self::SystemData) {
+        for (_lefty, pos) in (&lefty, &mut pos).join() {
+            pos.x -= 1;
+            if pos.x < 0 {
+                pos.x = 79;
+            }
+        }
+    }
+}
+
+impl State {
+    fn run_systems(&mut self) {
+        let mut lw = LeftWalker {};
+        lw.run_now(&self.ecs);
+        self.ecs.maintain();
     }
 }
 
@@ -55,6 +93,7 @@ fn main() -> rltk::BError {
     // everything that implements a `Component`, and create storages for those.
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<LeftMover>();
 
     gs.ecs
         // We create an entity, it's like an identification number, and
@@ -79,6 +118,7 @@ fn main() -> rltk::BError {
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
+            .with(LeftMover {})
             .build();
     }
 
