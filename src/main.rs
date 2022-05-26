@@ -23,7 +23,9 @@ struct Renderable {
 }
 
 // LeftMover likes to go left.
-#[derive(Component)]
+#[derive(Component, Component, Debug)]
+struct Player {}
+
 struct LeftMover {}
 
 struct State {
@@ -94,6 +96,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
+    gs.ecs.register::<Player>();
 
     gs.ecs
         // We create an entity, it's like an identification number, and
