@@ -49,8 +49,11 @@ pub fn xy_idx(x: i32, y: i32) -> usize {
 }
 
 fn new_map() -> Vec<TileType> {
+    // `vec!` takes in 2 parameters, what and how many.
+    // Here we want a vector of 4000 `TileType::Floor`.
     let mut map = vec![TileType::Floor; 80 * 50];
 
+    // building walls at the edge of the screen
     for x in 0..80 {
         map[xy_idx(x, 0)] = TileType::Wall;
         map[xy_idx(x, 49)] = TileType::Wall;
@@ -62,6 +65,9 @@ fn new_map() -> Vec<TileType> {
 
     let mut rng = rltk::RandomNumberGenerator::new();
 
+    // The `_` means we don't actually care about the value for `i`.
+    // Rust would otherwise scream about an unused variable.
+    // We place 400 random walls where there isn't the player spawn.
     for _i in 0..400 {
         let x = rng.roll_dice(1, 79);
         let y = rng.roll_dice(1, 49);
@@ -171,6 +177,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
+    gs.ecs.insert(new_map());
 
     gs.ecs
         // We create an entity, it's like an identification number, and
